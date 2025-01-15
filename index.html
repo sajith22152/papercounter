@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paper Usage Tracker</title>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #f3f4f6;
+            --border-radius: 8px;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f9fafb;
+            color: #1f2937;
+            line-height: 1.5;
+        }
+
+        h1, h2 {
+            color: #1f2937;
+            margin-bottom: 1.5rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 0.5rem;
+            margin-top: 0;
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .summary-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .summary-card h3 {
+            margin: 0 0 0.5rem 0;
+            color: #374151;
+        }
+
+        .summary-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        form {
+            background: white;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            display: grid;
+            gap: 1rem;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        label {
+            font-weight: 500;
+            color: #374151;
+        }
+
+        input {
+            padding: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #1d4ed8;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .search-section {
+            display: flex;
+            gap: 1rem;
+            flex: 1;
+        }
+
+        #searchBox {
+            flex: 1;
+            max-width: 300px;
+        }
+
+        .date-filter {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        table {
+            width: 100%;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        th {
+            background-color: var(--secondary-color);
+            font-weight: 600;
+            text-align: left;
+            padding: 1rem;
+            color: #374151;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover {
+            background-color: #f9fafb;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            
+            form, .controls {
+                display: none;
+            }
+
+            table {
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Paper Usage Tracker</h1>
+
+    <!-- Summary Cards -->
+    <div class="summary-cards">
+        <div class="summary-card">
+            <h3>Total A4 Papers</h3>
+            <div class="summary-value" id="totalA4">0</div>
+        </div>
+        <div class="summary-card">
+            <h3>Total A3 Papers</h3>
+            <div class="summary-value" id="totalA3">0</div>
+        </div>
+        <div class="summary-card">
+            <h3>Total Entries</h3>
+            <div class="summary-value" id="totalEntries">0</div>
+        </div>
+        <div class="summary-card">
+            <h3>Last Entry Date</h3>
+            <div class="summary-value" id="lastEntryDate">-</div>
+        </div>
+    </div>
+
+    <form id="paperForm">
+        <div class="form-group">
+            <label for="date">Date of Usage:</label>
+            <input type="date" id="date" required>
+        </div>
+        <div class="form-group">
+            <label for="a4">A4 Paper Used:</label>
+            <input type="number" id="a4" min="0" required>
+        </div>
+        <div class="form-group">
+            <label for="a3">A3 Paper Used:</label>
+            <input type="number" id="a3" min="0" required>
+        </div>
+        <div class="form-group">
+            <label for="purpose">Purpose of Usage:</label>
+            <input type="text" id="purpose" required>
+        </div>
+        <div class="form-group">
+            <button type="button" onclick="addEntry()">Add Entry</button>
+        </div>
+    </form>
+
+    <h2>Recorded Usage</h2>
+    <div class="controls">
+        <div class="search-section">
+            <input type="text" id="searchBox" placeholder="Search by purpose...">
+            <button onclick="searchEntries()">Search</button>
+        </div>
+        <div class="date-filter">
+            <label for="dateFilter">Filter by date:</label>
+            <select id="dateFilter" onchange="filterByDate()">
+                <option value="all">All Time</option>
+                <option value="today">Today</option>
+                <option value="week">This Week</option>
+                <option value="month">This Month</option>
+            </select>
+        </div>
+        <button onclick="printEntries()">Print All</button>
+        <button onclick="backupData()">Backup Data</button>
+        <button onclick="restoreData()">Restore Data</button>
+    </div>
+
+    <table id="paperTable">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>A4 Paper Used</th>
+                <th>A3 Paper Used</th>
+                <th>Purpose</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+        let paperData = [];
+
+        // Load data from localStorage when page loads
+        function loadFromLocalStorage() {
+            const savedData = localStorage.getItem('paperTrackerData');
+            if (savedData) {
+                paperData = JSON.parse(savedData);
+                updateTable();
+                updateSummary();
+            }
+        }
+
+        // Save data to localStorage after each update
+        function saveToLocalStorage() {
+            localStorage.setItem('paperTrackerData', JSON.stringify(paperData));
+        }
+
+        function updateSummary() {
+            const totalA4 = paperData.reduce((sum, entry) => sum + entry.a4, 0);
+            const totalA3 = paperData.reduce((sum, entry) => sum + entry.a3, 0);
+            const lastEntry = paperData[paperData.length - 1];
+
+            document.getElementById('totalA4').textContent = totalA4;
+            document.getElementById('totalA3').textContent = totalA3;
+            document.getElementById('totalEntries').textContent = paperData.length;
+            document.getElementById('lastEntryDate').textContent = lastEntry ? lastEntry.date : '-';
+        }
+
+        function addEntry() {
+            const date = document.getElementById('date').value;
+            const a4 = parseInt(document.getElementById('a4').value);
+            const a3 = parseInt(document.getElementById('a3').value);
+            const purpose = document.getElementById('purpose').value;
+
+            if (!date || isNaN(a4) || isNaN(a3) || !purpose) {
+                alert('Please fill all fields correctly!');
+                return;
+            }
+
+            const entry = { date, a4, a3, purpose };
+            paperData.push(entry);
+            updateTable();
+            updateSummary();
+            saveToLocalStorage(); // Save after adding new entry
+            
+            // Clear form
+            document.getElementById('paperForm').reset();
+        }
+
+        function filterByDate() {
+            const filter = document.getElementById('dateFilter').value;
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            let filteredData = paperData;
+
+            if (filter === 'today') {
+                filteredData = paperData.filter(entry => new Date(entry.date).toDateString() === today.toDateString());
+            } else if (filter === 'week') {
+                const weekAgo = new Date(today);
+                weekAgo.setDate(today.getDate() - 7);
+                filteredData = paperData.filter(entry => new Date(entry.date) >= weekAgo);
+            } else if (filter === 'month') {
+                const monthAgo = new Date(today);
+                monthAgo.setMonth(today.getMonth() - 1);
+                filteredData = paperData.filter(entry => new Date(entry.date) >= monthAgo);
+            }
+
+            updateTable(filteredData);
+        }
+
+        function updateTable(data = paperData) {
+            const tbody = document.getElementById('paperTable').querySelector('tbody');
+            tbody.innerHTML = '';
+
+            data.forEach(entry => {
+                const row = `<tr>
+                    <td>${entry.date}</td>
+                    <td>${entry.a4}</td>
+                    <td>${entry.a3}</td>
+                    <td>${entry.purpose}</td>
+                </tr>`;
+                tbody.innerHTML += row;
+            });
+        }
+
+        function searchEntries() {
+            const searchValue = document.getElementById('searchBox').value.toLowerCase();
+            const filteredData = paperData.filter(entry => 
+                entry.purpose.toLowerCase().includes(searchValue)
+            );
+            updateTable(filteredData);
+        }
+
+        function printEntries() {
+            window.print();
+        }
+
+        // Backup function
+        function backupData() {
+            const dataStr = JSON.stringify(paperData);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `paper_tracker_backup_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        // Restore function
+        function restoreData() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    try {
+                        const restoredData = JSON.parse(e.target.result);
+                        if (Array.isArray(restoredData)) {
+                            paperData = restoredData;
+                            updateTable();
+                            updateSummary();
+                            saveToLocalStorage();
+                            alert('Data restored successfully!');
+                        } else {
+                            alert('Invalid backup file format!');
+                        }
+                    } catch (error) {
+                        alert('Error restoring data: ' + error.message);
+                    }
+                };
+                
+                reader.readAsText(file);
+            };
+            
+            input.click();
+        }
+
+        // Initialize the app
+        loadFromLocalStorage();
+        updateSummary();
+    </script>
+</body>
+</html>
