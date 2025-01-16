@@ -180,7 +180,6 @@
 <body>
     <h1>Paper Usage Tracker</h1>
 
-    <!-- Summary Cards -->
     <div class="summary-cards">
         <div class="summary-card">
             <h3>Total A4 Papers</h3>
@@ -191,8 +190,16 @@
             <div class="summary-value" id="totalA3">0</div>
         </div>
         <div class="summary-card">
-            <h3>Total Entries</h3>
-            <div class="summary-value" id="totalEntries">0</div>
+            <h3>Today's Usage</h3>
+            <div class="summary-value" id="todayTotal">0</div>
+        </div>
+        <div class="summary-card">
+            <h3>Yesterday's Usage</h3>
+            <div class="summary-value" id="yesterdayTotal">0</div>
+        </div>
+        <div class="summary-card">
+            <h3>This Week's Usage</h3>
+            <div class="summary-value" id="weekTotal">0</div>
         </div>
         <div class="summary-card">
             <h3>Last Entry Date</h3>
@@ -257,7 +264,6 @@
     <script>
         let paperData = [];
 
-        // Load data from localStorage when page loads
         function loadFromLocalStorage() {
             const savedData = localStorage.getItem('paperTrackerData');
             if (savedData) {
@@ -267,7 +273,6 @@
             }
         }
 
-        // Save data to localStorage after each update
         function saveToLocalStorage() {
             localStorage.setItem('paperTrackerData', JSON.stringify(paperData));
         }
@@ -277,9 +282,45 @@
             const totalA3 = paperData.reduce((sum, entry) => sum + entry.a3, 0);
             const lastEntry = paperData[paperData.length - 1];
 
+            // Calculate today's usage
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const todayUsage = paperData.reduce((sum, entry) => {
+                const entryDate = new Date(entry.date);
+                if (entryDate.toDateString() === today.toDateString()) {
+                    return sum + entry.a4 + entry.a3;
+                }
+                return sum;
+            }, 0);
+
+            // Calculate yesterday's usage
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayUsage = paperData.reduce((sum, entry) => {
+                const entryDate = new Date(entry.date);
+                if (entryDate.toDateString() === yesterday.toDateString()) {
+                    return sum + entry.a4 + entry.a3;
+                }
+                return sum;
+            }, 0);
+
+            // Calculate this week's usage
+            const weekAgo = new Date(today);
+            weekAgo.setDate(today.getDate() - 7);
+            const weekUsage = paperData.reduce((sum, entry) => {
+                const entryDate = new Date(entry.date);
+                if (entryDate >= weekAgo) {
+                    return sum + entry.a4 + entry.a3;
+                }
+                return sum;
+            }, 0);
+
+            // Update all summary values
             document.getElementById('totalA4').textContent = totalA4;
             document.getElementById('totalA3').textContent = totalA3;
-            document.getElementById('totalEntries').textContent = paperData.length;
+            document.getElementById('todayTotal').textContent = todayUsage;
+            document.getElementById('yesterdayTotal').textContent = yesterdayUsage;
+            document.getElementById('weekTotal').textContent = weekUsage;
             document.getElementById('lastEntryDate').textContent = lastEntry ? lastEntry.date : '-';
         }
 
@@ -298,9 +339,8 @@
             paperData.push(entry);
             updateTable();
             updateSummary();
-            saveToLocalStorage(); // Save after adding new entry
+            saveToLocalStorage();
             
-            // Clear form
             document.getElementById('paperForm').reset();
         }
 
@@ -353,7 +393,6 @@
             window.print();
         }
 
-        // Backup function
         function backupData() {
             const dataStr = JSON.stringify(paperData);
             const dataBlob = new Blob([dataStr], { type: 'application/json' });
@@ -368,7 +407,6 @@
             URL.revokeObjectURL(url);
         }
 
-        // Restore function
         function restoreData() {
             const input = document.createElement('input');
             input.type = 'file';
@@ -401,7 +439,6 @@
             input.click();
         }
 
-        // Initialize the app
         loadFromLocalStorage();
         updateSummary();
     </script>
